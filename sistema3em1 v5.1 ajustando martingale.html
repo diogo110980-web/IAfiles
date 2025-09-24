@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sistema Unificado Aviator - Intervalos, Horários e Sequências</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+    margin: 20px;
+  }
+  h1, h2 {
+    text-align: center;
+  }
+  label {
+    font-weight: 600;
+    margin-top: 1em;
+    display: block;
+  }
+  textarea {
+    width: 100%;
+    height: 150px;
+    font-family: monospace;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  input[type=number] {
+    padding: 5px;
+    font-size: 14px;
+    width: 120px;
+    margin-left: 10px;
+  }
+  button {
+    margin-top: 10px;
+    padding: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #007cba;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    margin-left: 10px;
+  }
+  button:hover {
+    background-color: #005a87;
+  }
+  button.secondary {
+    background-color: #28a745;
+  }
+  button.secondary:hover {
+    background-color: #1e7e34;
+  }
+  .container {
+    max-width: 1400px;
+    margin: auto;
+  }
+  .section {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 30px;
+  }
+  .section-header {
+    background: #e9ecef;
+    margin: -15px -15px 15px -15px;
+    padding: 15px;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid #ddd;
+  }
+  .section-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .section-controls label {
+    margin: 0;
+    font-size: 14px;
+  }
+  .section-controls input {
+    margin: 0;
+    width: 100px;
+  }
+  .odds-pair {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .odds-column {
+    flex: 1;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 10px;
+  }
+  .odds-column h3 {
+    text-align: center;
+    margin-top: 0;
+    color: #333;
+  }
+  .stats {
+    margin: 10px 0;
+    background: #fff;
+    padding: 8px;
+    border-radius: 4px;
+  }
+  .stat-item {
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .charts-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .chart-wrapper {
+    flex: 1 1 300px;
+    min-width: 250px;
+  }
+  canvas {
+    width: 100% !important;
+    max-height: 200px !important;
+  }
+  .heatmap-container {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+  }
+  .heatmap-cell {
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 11px;
+    white-space: nowrap;
+    text-align: center;
+    min-width: 20px;
+  }
+  .ranking-container {
+    margin-top: 15px;
+    background-color: #fff;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    padding: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .ranking-container h4 {
+    margin: 0 0 8px 0;
+    font-weight: bold;
+    color: #0b84f3;
+  }
+  .ranking-item {
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  .info-box {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+  .hours-info-box {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-size: 14px;
+  }
+
+  /* ESTILOS ESPECÍFICOS PARA A 3ª ANÁLISE (COPIADOS DO ARQUIVO ORIGINAL) */
+  .sequences-main-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background: white;
+  }
+  .sequences-main-table th,
+  .sequences-main-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+  }
+  .sequences-main-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+  .martingale-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+  .martingale-controls {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .martingale-controls label {
+    font-weight: bold;
+  }
+  .martingale-controls input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 150px;
+  }
+  .recalcular-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .recalcular-btn:hover {
+    background-color: #218838;
+  }
+  .odds-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .odd-card {
+    background: white;
+    border: 2px solid;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .odd-card.odd-13 { border-color: #dc3545; }
+  .odd-card.odd-15 { border-color: #fd7e14; }
+  .odd-card.odd-2 { border-color: #20c997; }
+  .odd-card.odd-5 { border-color: #6f42c1; }
+  .odd-card.odd-10 { border-color: #0d6efd; }
+  
+  .odd-header {
+    padding: 10px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .odd-card.odd-13 .odd-header { background-color: #dc3545; }
+  .odd-card.odd-15 .odd-header { background-color: #fd7e14; }
+  .odd-card.odd-2 .odd-header { background-color: #20c997; }
+  .odd-card.odd-5 .odd-header { background-color: #6f42c1; }
+  .odd-card.odd-10 .odd-header { background-color: #0d6efd; }
+  
+  .multiplicador {
+    background: rgba(255,255,255,0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .investimento-info {
+    background: #28a745;
+    color: white;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .ausada-info {
+    background: #ffc107;
+    color: #212529;
+    padding: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+  .martingale-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  .martingale-table th,
+  .martingale-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+    font-size: 12px;
+  }
+  .martingale-table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+  }
+  .martingale-table .lucro-positivo {
+    color: #28a745;
+    font-weight: bold;
+  }
+  .martingale-table .lucro-negativo {
+    color: #dc3545;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🚀 Sistema Unificado Aviator</h1>
+
+  <section class="section" id="input-section">
+    <div class="section-header">
+      <h2>📥 Entrada de Dados</h2>
+    </div>
+    
+    <div class="info-box">
+      <strong>💡 Dica:</strong> Cole os dados uma vez aqui. Cada análise abaixo pode usar quantidades diferentes de rodadas.
+    </div>
+    
+    <label for="inputData">Cole os dados tabulados (Número Cor Data Horário ID):</label>
+    <textarea id="inputData" placeholder="Número  Cor    Data         Horário   ID
+tipminer.com tipminer.com tipminer.com tipminer.com tipminer.com
+1,28    preto  22/09/2025   08:59:35  2855153
+3,55    verde  22/09/2025   08:59:09  2855152
+4,16    verde  22/09/2025   08:58:41  2855151
+1,01    preto  22/09/2025   08:58:30  2855150
+..."></textarea>
+    
+    <div class="section-controls">
+      <label for="numRoundsGlobal">Rodadas padrão para todas as análises:</label>
+      <input type="number" id="numRoundsGlobal" value="500" min="1" max="10000" />
+      <button id="processBtn">🔄 Processar e Carregar Dados</button>
+    </div>
+    
+    <div id="status-message" style="margin-top: 10px; color: green; font-weight: bold;"></div>
+  </section>
+
+  <section class="section" id="intervals-section">
+    <div class="section-header">
+      <h2>📈 Análise de Intervalos</h2>
+      <div class="section-controls">
+        <label for="numRoundsIntervals">Rodadas para esta análise (vazio = usar padrão):</label>
+        <input type="number" id="numRoundsIntervals" placeholder="Ex: 1000" min="1" max="10000" />
+        <button class="secondary" id="processIntervalsBtn">📈 Analisar Intervalos</button>
+      </div>
+    </div>
+    
+    <div class="odds-pair">
+      <div class="odds-column">
+        <h3>Odds ≥ 5</h3>
+        <div class="stats" id="stats5"></div>
+        <div class="charts-row">
+          <div class="chart-wrapper"><canvas id="lineChart5"></canvas></div>
+          <div class="chart-wrapper"><canvas id="histChart5"></canvas></div>
+          <div class="chart-wrapper"><canvas id="freqChart5"></canvas></div>
+        </div>
+        <div class="heatmap-container" id="heatmap5"></div>
+      </div>
+      
+      <div class="odds-column">
+        <h3>Odds ≥ 10</h3>
+        <div class="stats" id="stats10"></div>
+        <div class="charts-row">
+          <div class="chart-wrapper"><canvas id="lineChart10"></canvas></div>
+          <div class="chart-wrapper"><canvas id="histChart10"></canvas></div>
+          <div class="chart-wrapper"><canvas id="freqChart10"></canvas></div>
+        </div>
+        <div class="heatmap-container" id="heatmap10"></div>
+      </div>
+    </div>
+    
+    <h3>Check de Consistência</h3>
+    <div class="charts-row">
+      <div class="chart-wrapper"><canvas id="consistencyCheckChart5"></canvas></div>
+      <div class="chart-wrapper"><canvas id="consistencyCheckChart10"></canvas></div>
+    </div>
+    <div class="odds-pair">
+      <div class="ranking-container" id="ranking5"></div>
+      <div class="ranking-container" id="ranking10"></div>
+    </div>
+  </section>
+
+  <section class="section" id="hours-section">
+    <div class="section-header">
+      <h2>🕐 Análise de Horários Pagantes (Odds ≥ 10)</h2>
+      <div class="section-controls">
+        <label for="numHoursAnalysis">Quantidade de horas completas para analisar:</label>
+        <input type="number" id="numHoursAnalysis" value="3" min="1" max="24" />
+        <label for="weightInput">Peso por hora:</label>
+        <input type="number" id="weightInput" value="1.1" step="0.01" min="1" max="3" />
+        <button class="secondary" id="processHoursBtn">🕐 Analisar Horários</button>
+      </div>
+    </div>
+    
+    <div class="hours-info-box">
+      <strong>🕐 Lógica:</strong> O sistema encontra a primeira hora útil nos dados (ex: 13:45) e ignora todos os dados dessa hora atual. Analisa apenas as X horas completas anteriores (ex: 12:xx, 11:xx, 10:xx para 3 horas).
+    </div>
+    
+    <div id="hours-analysis-info"></div>
+    
+    <h3>Mapa de Calor - Minutos (00 a 59)</h3>
+    <div class="heatmap-container" id="heatmapHours"></div>
+    <div class="ranking-container" id="hoursRanking"></div>
+  </section>
+
+  <section class="section" id="sequences-section">
+    <div class="section-header">
+      <h2>🎯 Análise de Sequências Máximas com Martingale</h2>
+      <div class="section-controls">
+        <label for="numRoundsSequences">Rodadas para esta análise (vazio = usar padrão):</label>
+        <input type="number" id="numRoundsSequences" placeholder="Ex: 3000" min="1" max="10000" />
+        <button class="secondary" id="processSequencesBtn">🎯 Analisar Sequências</button>
+      </div>
+    </div>
+    
+    <!-- TABELA PRINCIPAL DE SEQUÊNCIAS (COPIADA DO ARQUIVO ORIGINAL) -->
+    <table class="sequences-main-table" id="sequencesMainTable">
+      <thead>
+        <tr>
+          <th>Limite</th>
+          <th>Total</th>
+          <th>Ult 12h</th>
+          <th>Ult 6h</th>
+          <th>Ult 3h</th>
+          <th>Ult 2h</th>
+          <th>Ult 1h</th>
+          <th>Ult 30m</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Dados serão inseridos aqui via JavaScript -->
+      </tbody>
+    </table>
+
+    <!-- CALCULADORA MARTINGALE (COPIADA DO ARQUIVO ORIGINAL) -->
+    <div class="martingale-section">
+      <h3>Calculadora Martingale</h3>
+      <div class="martingale-controls">
+        <div>
+          <label for="bancaTotal">Banca Total (R$):</label>
+          <input type="number" id="bancaTotal" value="1000" step="0.01" />
+        </div>
+        <div>
+          <label for="percentualTotal">% da Banca para Investir:</label>
+          <input type="number" id="percentualTotal" value="25" step="0.1" min="0.1" max="100" />
+        </div>
+        <button class="recalcular-btn" id="recalcularMartingale">Recalcular Martingale</button>
+      </div>
+
+      <!-- GRID DE CARDS DAS ODDS (COPIADO DO ARQUIVO ORIGINAL) -->
+      <div class="odds-grid" id="oddsGrid">
+        <!-- Cards serão inseridos aqui via JavaScript -->
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Variáveis globais
+  const charts = {
+    line5: null, hist5: null, freq5: null,
+    line10: null, hist10: null, freq10: null,
+    consistency5: null, consistency10: null
+  };
+
+  const groupColors = [
+    'rgba(255,99,132,0.6)', 'rgba(54,162,235,0.6)',
+    'rgba(255,206,86,0.6)', 'rgba(75,192,192,0.6)'
+  ];
+
+  // Dados globais carregados
+  let allOdds = [];
+  let allTimes = [];
+
+  // Função para atualizar status
+  function updateStatus(message, isError = false) {
+    const statusEl = document.getElementById('status-message');
+    statusEl.textContent = message;
+    statusEl.style.color = isError ? 'red' : 'green';
+    console.log(message);
+  }
+
+  // Parse dos dados tabulados
+  function parseInputData(text) {
+    try {
+      const lines = text.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      
+      if (lines.length < 3) {
+        throw new Error('Dados insuficientes - precisa de pelo menos 3 linhas');
+      }
+
+      const odds = [];
+      const times = [];
+      
+      // Skip 2 primeiras linhas
+      for (let i = 2; i < lines.length; i++) {
+        const parts = lines[i].split(/\s+/);
+        if (parts.length >= 4) {
+          // Extrair odd (coluna 0)
+          const oddStr = parts[0].replace(',', '.');
+          const odd = parseFloat(oddStr);
+          
+          // Extrair horário (coluna 3)
+          const timeStr = parts[3];
+          
+          if (!isNaN(odd) && odd > 0) {
+            odds.push(odd);
+            times.push(timeStr);
+          }
+        }
+      }
+      
+      if (odds.length === 0) {
+        throw new Error('Nenhuma odd válida encontrada');
+      }
+      
+      return { odds, times };
+      
+    } catch (error) {
+      updateStatus(`❌ Erro no parse: ${error.message}`, true);
+      return { odds: [], times: [] };
+    }
+  }
+
+  // Função para selecionar dados baseado no número de rodadas
+  function selectDataForAnalysis(analysisType) {
+    let numRounds;
+    
+    // Determinar número de rodadas baseado na análise
+    switch (analysisType) {
+      case 'intervals':
+        numRounds = parseInt(document.getElementById('numRoundsIntervals').value) || 
+                   parseInt(document.getElementById('numRoundsGlobal').value);
+        break;
+      case 'sequences':
+        numRounds = parseInt(document.getElementById('numRoundsSequences').value) || 
+                   parseInt(document.getElementById('numRoundsGlobal').value);
+        break;
+      default:
+        numRounds = parseInt(document.getElementById('numRoundsGlobal').value);
+    }
+    
+    if (isNaN(numRounds) || numRounds < 1) {
+      numRounds = 500; // fallback
+    }
+    
+    // Validar se temos dados suficientes
+    if (numRounds > allOdds.length) {
+      updateStatus(`⚠️ Solicitado ${numRounds} rodadas, mas só temos ${allOdds.length}. Usando ${allOdds.length}.`);
+      numRounds = allOdds.length;
+    }
+    
+    // Selecionar últimas N rodadas e inverter ordem (mais recente primeiro)
+    const selectedOdds = allOdds.slice(-numRounds).reverse();
+    const selectedTimes = allTimes.slice(-numRounds).reverse();
+    
+    return { odds: selectedOdds, times: selectedTimes, count: numRounds };
+  }
+
+  // ========== ANÁLISE DE INTERVALOS (MANTIDA IGUAL) ==========
+  function findIndicesAbove(arr, threshold) {
+    return arr.reduce((acc, val, idx) => {
+      if (val >= threshold) acc.push(idx);
+      return acc;
+    }, []);
+  }
+
+  function calcIntervals(indices) {
+    const intervals = [];
+    for (let i = 1; i < indices.length; i++) {
+      intervals.push(indices[i] - indices[i - 1]);
+    }
+    return intervals;
+  }
+
+  function calcStats(arr) {
+    if (arr.length === 0) return null;
+    
+    const sorted = [...arr].sort((a, b) => a - b);
+    const sum = arr.reduce((a, b) => a + b, 0);
+    const mean = sum / arr.length;
+    const median = sorted.length % 2 === 1 
+      ? sorted[Math.floor(sorted.length / 2)] 
+      : (sorted[Math.floor(sorted.length / 2) - 1] + sorted[Math.floor(sorted.length / 2)]) / 2;
+    
+    return {
+      count: arr.length,
+      mean,
+      median,
+      min: sorted[0],
+      max: sorted[sorted.length - 1]
+    };
+  }
+
+  function buildHistogram(arr, bucketSize) {
+    if (arr.length === 0) return { labels: [], counts: [] };
+    
+    const maxVal = Math.max(...arr);
+    const labels = [];
+    const counts = [];
+    
+    for (let start = 1; start <= maxVal; start += bucketSize) {
+      labels.push(`${start}-${start + bucketSize - 1}`);
+      counts.push(0);
+    }
+    
+    for (const val of arr) {
+      const idx = Math.min(Math.floor((val - 1) / bucketSize), counts.length - 1);
+      if (idx >= 0) counts[idx]++;
+    }
+    
+    return { labels, counts };
+  }
+
+  function freqIntervalsUpTo20(arr) {
+    const freq = Array(20).fill(0);
+    for (const val of arr) {
+      if (val >= 1 && val <= 20) {
+        freq[val - 1]++;
+      }
+    }
+    return freq;
+  }
+
+  function renderHeatmap(containerId, labels, counts) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (labels.length === 0) {
+      container.innerHTML = '<p>Sem dados para heatmap</p>';
+      return;
+    }
+    
+    const maxCount = Math.max(...counts, 1);
+    
+    for (let i = 0; i < labels.length; i++) {
+      const count = counts[i];
+      const intensity = count / maxCount;
+      
+      const cell = document.createElement('div');
+      cell.textContent = `${labels[i]} (${count})`;
+      cell.className = 'heatmap-cell';
+      cell.style.backgroundColor = `rgba(11,132,243,${0.15 + 0.85 * intensity})`;
+      cell.style.color = intensity > 0.5 ? 'white' : 'black';
+      
+      container.appendChild(cell);
+    }
+  }
+
+  function clearIntervalCharts() {
+    ['line5', 'hist5', 'freq5', 'line10', 'hist10', 'freq10', 'consistency5', 'consistency10'].forEach(key => {
+      if (charts[key]) {
+        charts[key].destroy();
+        charts[key] = null;
+      }
+    });
+  }
+
+  function analyzeIntervals() {
+    if (allOdds.length === 0) {
+      updateStatus('❌ Carregue os dados primeiro', true);
+      return;
+    }
+    
+    const { odds, count } = selectDataForAnalysis('intervals');
+    updateStatus(`🔄 Analisando intervalos para ${count} rodadas...`);
+    
+    clearIntervalCharts();
+    
+    [5, 10].forEach(threshold => {
+      try {
+        const indices = findIndicesAbove(odds, threshold);
+        const intervals = calcIntervals(indices);
+        const stats = calcStats(intervals);
+        const histData = buildHistogram(intervals, 5);
+        const freqData = freqIntervalsUpTo20(intervals);
+        
+        // Atualizar estatísticas
+        const statsEl = document.getElementById(`stats${threshold}`);
+        if (statsEl) {
+          statsEl.innerHTML = stats ? `
+            <div class="stat-item"><strong>Rodadas analisadas:</strong> ${count}</div>
+            <div class="stat-item">Total odds ≥ ${threshold}: ${indices.length}</div>
+            <div class="stat-item">Intervalos calculados: ${intervals.length}</div>
+            <div class="stat-item">Média intervalo: ${stats.mean.toFixed(2)}</div>
+            <div class="stat-item">Mediana intervalo: ${stats.median.toFixed(2)}</div>
+            <div class="stat-item">Mínimo intervalo: ${stats.min}</div>
+            <div class="stat-item">Máximo intervalo: ${stats.max}</div>
+          ` : `<div class="stat-item">Sem dados suficientes para odds ≥ ${threshold}</div>`;
+        }
+
+        if (intervals.length > 0) {
+          // Gráfico de linha
+          const lineCanvas = document.getElementById(`lineChart${threshold}`);
+          if (lineCanvas) {
+            const lineCtx = lineCanvas.getContext('2d');
+            charts[`line${threshold}`] = new Chart(lineCtx, {
+              type: 'line',
+              data: {
+                labels: intervals.map((_, i) => i + 1),
+                datasets: [{
+                  label: `Intervalo odds ≥ ${threshold}`,
+                  data: intervals,
+                  borderColor: threshold === 5 ? 'orange' : 'blue',
+                  backgroundColor: threshold === 5 ? 'rgba(255,165,0,0.15)' : 'rgba(0,0,255,0.15)',
+                  fill: true,
+                  tension: 0.3,
+                  pointRadius: 2
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  x: { title: { display: true, text: 'Sequência' } },
+                  y: { title: { display: true, text: 'Intervalo' }, beginAtZero: true }
+                },
+                plugins: { legend: { display: false } }
+              }
+            });
+          }
+
+          // Histograma
+          const histCanvas = document.getElementById(`histChart${threshold}`);
+          if (histCanvas) {
+            const histCtx = histCanvas.getContext('2d');
+            charts[`hist${threshold}`] = new Chart(histCtx, {
+              type: 'bar',
+              data: {
+                labels: histData.labels,
+                datasets: [{
+                  label: `Frequência`,
+                  data: histData.counts,
+                  backgroundColor: threshold === 5 ? 'orange' : 'blue',
+                  borderColor: threshold === 5 ? 'darkorange' : 'darkblue',
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  x: { title: { display: true, text: 'Faixa' } },
+                  y: { title: { display: true, text: 'Frequência' }, beginAtZero: true }
+                },
+                plugins: { legend: { display: false } }
+              }
+            });
+          }
+
+          // Gráfico de frequência (1-20)
+          const freqCanvas = document.getElementById(`freqChart${threshold}`);
+          if (freqCanvas) {
+            const freqCtx = freqCanvas.getContext('2d');
+            charts[`freq${threshold}`] = new Chart(freqCtx, {
+              type: 'bar',
+              data: {
+                labels: Array.from({ length: 20 }, (_, i) => i + 1),
+                datasets: [{
+                  label: `Distribuição`,
+                  data: freqData,
+                  backgroundColor: threshold === 5 ? 'orange' : 'blue',
+                  borderColor: threshold === 5 ? 'darkorange' : 'darkblue',
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                  x: { title: { display: true, text: 'Rodada (1-20)' } },
+                  y: { title: { display: true, text: 'Frequência' }, beginAtZero: true }
+                },
+                plugins: { legend: { display: false } }
+              }
+            });
+          }
+
+          // Render heatmap
+          renderHeatmap(`heatmap${threshold}`, histData.labels, histData.counts);
+        }
+
+        updateConsistencyChart(odds, threshold);
+        updateRanking(odds, threshold);
+        
+      } catch (error) {
+        console.error(`Erro na análise de intervals ${threshold}:`, error);
+      }
+    });
+    
+    updateStatus('✅ Análise de intervalos concluída!');
+  }
+
+  // Check de consistência
+  function calcFreqByGroup(odds, threshold, startIdx, endIdx) {
+    const indices = [];
+    const oddsSlice = odds.slice(startIdx, endIdx);
+    
+    oddsSlice.forEach((val, idx) => {
+      if (val >= threshold) {
+        indices.push(idx);
+      }
+    });
+    
+    const freq = Array(20).fill(0);
+    
+    for (let i = 0; i < indices.length; i++) {
+      const dist = i === 0 ? indices[i] + 1 : indices[i] - indices[i - 1];
+      if (dist >= 1 && dist <= 20) {
+        freq[dist - 1]++;
+      }
+    }
+    
+    return freq;
+  }
+
+  function updateConsistencyChart(odds, threshold) {
+    if (!odds || odds.length === 0) return;
+    
+    try {
+      const groupSize = Math.floor(odds.length / 4);
+      const labels = Array.from({ length: 20 }, (_, i) => i + 1);
+      const datasets = [];
+      
+      for (let i = 0; i < 4; i++) {
+        const start = i * groupSize;
+        const end = i === 3 ? odds.length : (i + 1) * groupSize;
+        const freq = calcFreqByGroup(odds, threshold, start, end);
+        
+        datasets.push({
+          label: `Grupo ${i + 1}`,
+          data: freq,
+          backgroundColor: groupColors[i],
+          borderColor: groupColors[i].replace('0.6', '1'),
+          borderWidth: 1
+        });
+      }
+      
+      const canvasId = `consistencyCheckChart${threshold}`;
+      const canvas = document.getElementById(canvasId);
+      
+      if (canvas) {
+        if (charts[`consistency${threshold}`]) {
+          charts[`consistency${threshold}`].destroy();
+        }
+        
+        const ctx = canvas.getContext('2d');
+        charts[`consistency${threshold}`] = new Chart(ctx, {
+          type: 'bar',
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { title: { display: true, text: 'Rodada (1 a 20)' } },
+              y: { title: { display: true, text: 'Frequência' }, beginAtZero: true }
+            },
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: `Check de Consistência - Odds ≥ ${threshold}` }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error(`Erro no consistency chart ${threshold}:`, error);
+    }
+  }
+
+  function updateRanking(odds, threshold) {
+    if (!odds || odds.length === 0) return;
+    
+    try {
+      const groupSize = Math.floor(odds.length / 4);
+      const rodadas = 20;
+      
+      let freqMatrix = Array.from({ length: rodadas }, () => [0, 0, 0, 0]);
+      
+      for (let g = 0; g < 4; g++) {
+        const start = g * groupSize;
+        const end = g === 3 ? odds.length : (g + 1) * groupSize;
+        const oddsSlice = odds.slice(start, end);
+        const indices = [];
+        
+        oddsSlice.forEach((val, idx) => {
+          if (val >= threshold) {
+            indices.push(idx);
+          }
+        });
+        
+        for (let i = 0; i < indices.length; i++) {
+          const dist = i === 0 ? indices[i] + 1 : indices[i] - indices[i - 1];
+          if (dist >= 1 && dist <= rodadas) {
+            freqMatrix[dist - 1][g]++;
+          }
+        }
+      }
+      
+      const ranking = [];
+      for (let rodada = 0; rodada < rodadas; rodada++) {
+        const grupoCount = freqMatrix[rodada].reduce((acc, v) => acc + (v > 0 ? 1 : 0), 0);
+        const totalFreq = freqMatrix[rodada].reduce((a, b) => a + b, 0);
+        
+        const minGroups = threshold === 10 ? 2 : 3;
+        
+        if (grupoCount >= minGroups) {
+          ranking.push({
+            rodada: rodada + 1,
+            grupos: grupoCount,
+            freq: totalFreq
+          });
+        }
+      }
+      
+      ranking.sort((a, b) => a.rodada - b.rodada);
+      
+      const containerId = `ranking${threshold}`;
+      const container = document.getElementById(containerId);
+      
+      if (container) {
+        if (ranking.length === 0) {
+          container.innerHTML = `<h4>Ranking rodadas - Odds ≥ ${threshold}</h4><p>Nenhuma rodada com participação mínima de grupos.</p>`;
+        } else {
+          let html = `<h4>Ranking rodadas - Odds ≥ ${threshold}</h4>`;
+          ranking.forEach(item => {
+            html += `<div class="ranking-item">Rodada ${item.rodada}: ${item.freq} ocorrências, com ${item.grupos} grupos</div>`;
+          });
+          container.innerHTML = html;
+        }
+      }
+    } catch (error) {
+      console.error(`Erro no ranking ${threshold}:`, error);
+    }
+  }
+
+  // ========== ANÁLISE DE HORÁRIOS (MANTIDA IGUAL) ==========
+  function analyzeHours() {
+    if (allOdds.length === 0 || allTimes.length === 0) {
+      updateStatus('❌ Carregue os dados primeiro', true);
+      return;
+    }
+    
+    const numHours = parseInt(document.getElementById('numHoursAnalysis').value) || 3;
+    const weightBase = parseFloat(document.getElementById('weightInput').value) || 1.1;
+    
+    updateStatus(`🔄 Analisando horários para ${numHours} horas completas...`);
+    
+    try {
+      // 1. Encontrar primeira hora útil nos dados
+      let firstHour = null;
+      let firstTime = null;
+      
+      for (let i = 0; i < allTimes.length; i++) {
+        if (allTimes[i] && allTimes[i].match(/^\d{2}:\d{2}:\d{2}$/)) {
+          firstHour = parseInt(allTimes[i].substr(0, 2));
+          firstTime = allTimes[i];
+          break;
+        }
+      }
+      
+      if (firstHour === null) {
+        updateStatus('❌ Não foi possível extrair horários válidos', true);
+        return;
+      }
+      
+      // 2. Calcular horas alvo para análise (ignorar hora atual)
+      const targetHours = [];
+      for (let h = 1; h <= numHours; h++) {
+        let targetHour = firstHour - h;
+        if (targetHour < 0) targetHour += 24;
+        targetHours.push(targetHour);
+      }
+      
+      // 3. Filtrar dados apenas das horas alvo
+      const filteredData = [];
+      for (let i = 0; i < allOdds.length && i < allTimes.length; i++) {
+        if (allOdds[i] < 10) continue; // apenas odds ≥10
+        if (!allTimes[i] || !allTimes[i].match(/^\d{2}:\d{2}:\d{2}$/)) continue;
+        
+        const h = parseInt(allTimes[i].substr(0, 2));
+        const m = parseInt(allTimes[i].substr(3, 2));
+        
+        if (isNaN(h) || isNaN(m)) continue;
+        if (!targetHours.includes(h)) continue; // apenas horas alvo
+        
+        // Calcular peso (horas mais próximas da atual têm mais peso)
+        const hourDiff = targetHours.indexOf(h) + 1; // 1, 2, 3, ...
+        const peso = Math.pow(weightBase, -hourDiff);
+        
+        filteredData.push({
+          odd: allOdds[i],
+          hour: h,
+          minute: m,
+          time: allTimes[i],
+          weight: peso
+        });
+      }
+      
+      // 4. Agrupar por minutos
+      const minutos = {};
+      
+      filteredData.forEach(record => {
+        const minutoChave = record.minute < 10 ? `0${record.minute}` : `${record.minute}`;
+        
+        if (!minutos[minutoChave]) {
+          minutos[minutoChave] = { ponderada: 0, count: 0 };
+        }
+        
+        minutos[minutoChave].ponderada += record.weight;
+        minutos[minutoChave].count++;
+      });
+      
+      // 5. Gerar ranking
+      const resultado = Object.entries(minutos)
+        .filter(([, data]) => data.count > 0)
+        .sort((a, b) => b[1].ponderada - a[1].ponderada);
+      
+      // 6. Informações de análise
+      const infoEl = document.getElementById('hours-analysis-info');
+      if (infoEl) {
+        infoEl.innerHTML = `
+          <div style="background: #e8f5e8; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+            <strong>📊 Análise Executada:</strong><br>
+            • Primeira hora encontrada: <strong>${firstTime}</strong> (ignorada)<br>
+            • Horas analisadas: <strong>${targetHours.map(h => h.toString().padStart(2, '0') + ':xx').join(', ')}</strong><br>
+            • Total de registros odds ≥10: <strong>${filteredData.length}</strong><br>
+            • Peso base: <strong>${weightBase}</strong>
+          </div>
+        `;
+      }
+      
+      renderHoursHeatmap(minutos, numHours, targetHours);
+      renderHoursRanking(resultado, numHours, filteredData.length);
+      
+      updateStatus('✅ Análise de horários concluída!');
+      
+    } catch (error) {
+      console.error('Erro na análise de horários:', error);
+      updateStatus(`❌ Erro na análise de horários: ${error.message}`, true);
+    }
+  }
+
+  function renderHoursHeatmap(minutos, numHours, targetHours) {
+    const container = document.getElementById('heatmapHours');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    let maxPonderada = 0;
+    for (let i = 0; i < 60; i++) {
+      const key = i < 10 ? `0${i}` : `${i}`;
+      const val = minutos[key] ? minutos[key].ponderada : 0;
+      if (val > maxPonderada) maxPonderada = val;
+    }
+    
+    if (maxPonderada === 0) {
+      container.innerHTML = `<p style="text-align: center; color: #666;">Nenhum dado para o mapa de calor (${numHours} horas: ${targetHours.map(h => h.toString().padStart(2, '0')).join(', ')}).</p>`;
+      return;
+    }
+    
+    for (let i = 0; i < 60; i++) {
+      const key = i < 10 ? `0${i}` : `${i}`;
+      const valor = minutos[key] ? minutos[key].ponderada : 0;
+      const alpha = valor / maxPonderada;
+      
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      cell.style.backgroundColor = `rgba(239, 68, 68, ${alpha.toFixed(2)})`;
+      cell.style.color = alpha > 0.5 ? 'white' : 'black';
+      cell.textContent = key;
+      cell.title = `Minuto :${key} - ${valor.toFixed(3)}`;
+      
+      container.appendChild(cell);
+    }
+  }
+
+  function renderHoursRanking(resultado, numHours, totalRecords) {
+    const container = document.getElementById('hoursRanking');
+    if (!container) return;
+    
+    if (resultado.length === 0) {
+      container.innerHTML = `<h4>Ranking dos Minutos (${numHours} horas)</h4><p>Nenhum horário com odds ≥10 encontrado.</p>`;
+      return;
+    }
+    
+    let html = `<h4>Ranking dos Minutos Mais Pagantes - ${numHours} horas (${totalRecords} registros odds ≥10)</h4>`;
+    resultado.slice(0, 15).forEach(([minuto, dados]) => {
+      html += `<div class="ranking-item">:${minuto} - Ponderada: ${dados.ponderada.toFixed(3)} - Ocorrências: ${dados.count}</div>`;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  // ========== ANÁLISE DE SEQUÊNCIAS (COPIADA EXATAMENTE DO ARQUIVO ORIGINAL) ==========
+  
+  // FUNÇÕES COPIADAS EXATAMENTE DO max-por-odd-v14.html
+  function calculateMaxSequence(data, limite) {
+    let maxSeq = 0;
+    let currentSeq = 0;
+    
+    data.forEach(record => {
+      if (record < limite) {
+        currentSeq++;
+      } else {
+        if (currentSeq > maxSeq) {
+          maxSeq = currentSeq;
+        }
+        currentSeq = 0;
+      }
+    });
+    
+    // Verificar sequência final
+    if (currentSeq > maxSeq) {
+      maxSeq = currentSeq;
+    }
+    
+    return maxSeq;
+  }
+
+  function calculateMultiplier(odds) {
+    return (odds / (odds - 1)) * 1.05; // 5% margem
+  }
+
+  function getTimeBasedData(odds, times, hours) {
+    // Se times não está disponível ou é inválido, retorna todos os dados
+    if (!times || times.length !== odds.length) {
+      return odds;
+    }
+    
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - hours * 60 * 60 * 1000);
+    
+    const filteredData = [];
+    for (let i = 0; i < odds.length; i++) {
+      if (times[i]) {
+        // Para dados simulados, vamos apenas pegar as últimas N entradas
+        // baseado na posição no array
+        const hoursBack = (odds.length - i) / (odds.length / 24); // Simula distribuição em 24h
+        if (hoursBack <= hours) {
+          filteredData.push(odds[i]);
+        }
+      }
+    }
+    
+    return filteredData.length > 0 ? filteredData : odds.slice(-Math.floor(odds.length * hours / 24));
+  }
+
+  function analyzeSequences() {
+    if (allOdds.length === 0) {
+      updateStatus('❌ Carregue os dados primeiro', true);
+      return;
+    }
+    
+    const { odds, times, count } = selectDataForAnalysis('sequences');
+    updateStatus(`🔄 Analisando sequências para ${count} rodadas...`);
+    
+    try {
+      const limits = [1.3, 1.5, 2, 5, 10, 30, 50, 100, 1000];
+      const timePeriods = [
+        { name: 'Total', hours: null },
+        { name: 'Ult 12h', hours: 12 },
+        { name: 'Ult 6h', hours: 6 },
+        { name: 'Ult 3h', hours: 3 },
+        { name: 'Ult 2h', hours: 2 },
+        { name: 'Ult 1h', hours: 1 },
+        { name: 'Ult 30m', hours: 0.5 }
+      ];
+      
+      // Construir tabela principal
+      const tbody = document.querySelector('#sequencesMainTable tbody');
+      tbody.innerHTML = '';
+      
+      limits.forEach(limit => {
+        const row = document.createElement('tr');
+        let html = `<td>${limit}</td>`;
+        
+        timePeriods.forEach(period => {
+          const dataForPeriod = period.hours === null ? odds : getTimeBasedData(odds, times, period.hours);
+          const maxSeq = calculateMaxSequence(dataForPeriod, limit);
+          html += `<td>${maxSeq}</td>`;
+        });
+        
+        row.innerHTML = html;
+        tbody.appendChild(row);
+      });
+      
+      // Atualizar calculadora martingale
+      updateMartingaleCalculator(odds);
+      
+      updateStatus('✅ Análise de sequências concluída!');
+      
+    } catch (error) {
+      console.error('Erro na análise de sequências:', error);
+      updateStatus(`❌ Erro na análise de sequências: ${error.message}`, true);
+    }
+  }
+
+  function updateMartingaleCalculator(odds) {
+    const bancaTotal = parseFloat(document.getElementById('bancaTotal').value) || 1000;
+    const percentualTotal = parseFloat(document.getElementById('percentualTotal').value) || 25;
+    const investimentoTotal = (bancaTotal * percentualTotal) / 100;
+    
+    const oddsToAnalyze = [1.3, 1.5, 2, 5, 10];
+    const oddsGrid = document.getElementById('oddsGrid');
+    oddsGrid.innerHTML = '';
+    
+    oddsToAnalyze.forEach(oddLimit => {
+      const maxSeq = calculateMaxSequence(odds, oddLimit);
+      const multiplier = calculateMultiplier(oddLimit);
+      
+      // Criar card
+      const card = document.createElement('div');
+      card.className = `odd-card odd-${oddLimit.toString().replace('.', '')}`;
+      
+      const valorPorStep = maxSeq > 0 ? investimentoTotal / maxSeq : 0;
+      
+      let cardHtml = `
+        <div class="odd-header">
+          <span>Odd ${oddLimit}</span>
+          <span class="multiplicador">x${multiplier.toFixed(2)}</span>
+        </div>
+        <div class="investimento-info">
+          Inv. R$ ${investimentoTotal.toFixed(2)} (${percentualTotal}%)
+        </div>
+        <div class="ausada-info">
+          Ausada
+        </div>
+      `;
+      
+      // Tabela de martingale
+      if (maxSeq > 0) {
+        cardHtml += `
+          <table class="martingale-table">
+            <thead>
+              <tr>
+                <th>Rodada</th>
+                <th>Valor</th>
+                <th>Acum.</th>
+                <th>Retorno</th>
+                <th>Lucro</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        let acumulado = 0;
+        for (let rodada = 1; rodada <= Math.min(maxSeq, 15); rodada++) {
+          const valor = valorPorStep;
+          acumulado += valor;
+          const retorno = valor * multiplier;
+          const lucro = retorno - acumulado;
+          
+          const lucroClass = lucro >= 0 ? 'lucro-positivo' : 'lucro-negativo';
+          
+          cardHtml += `
+            <tr>
+              <td>${rodada}ª</td>
+              <td>R$ ${valor.toFixed(2)}</td>
+              <td>R$ ${acumulado.toFixed(2)}</td>
+              <td>R$ ${retorno.toFixed(2)}</td>
+              <td class="${lucroClass}">R$ ${lucro.toFixed(2)}</td>
+            </tr>
+          `;
+        }
+        
+        cardHtml += '</tbody></table>';
+      } else {
+        cardHtml += '<p style="text-align: center; padding: 20px;">Sem sequência para esta odd</p>';
+      }
+      
+      card.innerHTML = cardHtml;
+      oddsGrid.appendChild(card);
+    });
+  }
+
+  // ========== EVENT LISTENERS ==========
+  
+  // Botão principal - carrega os dados
+  document.getElementById('processBtn').addEventListener('click', () => {
+    const rawText = document.getElementById('inputData').value;
+    
+    if (!rawText.trim()) {
+      updateStatus('❌ Cole os dados para processamento', true);
+      return;
+    }
+    
+    updateStatus('🔄 Carregando dados...');
+    
+    // Parse dos dados
+    const { odds, times } = parseInputData(rawText);
+    
+    if (odds.length === 0) {
+      return; // Erro já foi mostrado no parse
+    }
+    
+    // Armazenar dados globais
+    allOdds = odds;
+    allTimes = times;
+    
+    updateStatus(`✅ ${allOdds.length} rodadas carregadas! Use os botões específicos para cada análise.`);
+  });
+
+  // Botões específicos para cada análise
+  document.getElementById('processIntervalsBtn').addEventListener('click', analyzeIntervals);
+  document.getElementById('processHoursBtn').addEventListener('click', analyzeHours);
+  document.getElementById('processSequencesBtn').addEventListener('click', analyzeSequences);
+  
+  // Botão recalcular martingale
+  document.getElementById('recalcularMartingale').addEventListener('click', () => {
+    if (allOdds.length > 0) {
+      const { odds } = selectDataForAnalysis('sequences');
+      updateMartingaleCalculator(odds);
+      updateStatus('✅ Martingale recalculado!');
+    } else {
+      updateStatus('❌ Carregue os dados primeiro', true);
+    }
+  });
+</script>
+</body>
+</html>
